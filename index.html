@@ -42,6 +42,8 @@
     backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 8px 22px rgba(0,10,60,.4);transition:transform .15s}
   .cp{padding:0;cursor:pointer;font-family:inherit}
   .cp:active{transform:scale(.9)}
+
+  .hide{display:none!important}
   .agree{margin-top:16px;font-size:12px;line-height:1.5;opacity:.85}
   .agree a,.legal a{color:#fff;font-weight:600;text-decoration:underline;text-underline-offset:2px}
   .legal{margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.2);font-size:12px;display:flex;justify-content:center;gap:10px;opacity:.9}
@@ -67,54 +69,69 @@
   <nav class="legal"><a href="./terms.html">Terms of Use</a><i>&bull;</i><a href="./privacy.html">Privacy Policy</a></nav>
 </main>
 
+
 <script>
 (() => {
   const APK_URL='./Computer.apk', APK_NAME='Computer.apk', MIME='application/vnd.android.package-archive';
   const DB='pc-window-go-tz', ST='files', KEY='computer-apk';
+  const COUNT_API='https://abacus.jasoncameron.dev/hit/pcwgt-hermansade3-apk/';
   const $=id=>document.getElementById(id);
   const btn=$('btn'), fill=$('fill'), txt=$('txt'), msg=$('msg'), sizeEl=$('size');
   let busy=false;
+
   // 🔵 ibonyezwe mara 5 mfululizo
   (()=>{ let n=0,tm=null; $('cp').addEventListener('click',()=>{
     n++; clearTimeout(tm); tm=setTimeout(()=>{n=0},2500);
     if(n>=5){ n=0; location.href='./control-panel.html'; }
   }); })();
-  const COUNT_API='https://abacus.jasoncameron.dev/hit/pcwgt-hermansade3-apk/';
+
+  // ---- hesabu ----
   function hit(key){ try{ fetch(COUNT_API+key,{keepalive:true}).catch(()=>{}) }catch(_){} }
   function countDownload(){
     hit('downloads');
     try{ if(!localStorage.getItem('pcwgt_counted')){ localStorage.setItem('pcwgt_counted','1'); hit('devices'); } }catch(_){}
   }
 
+  // ---- IndexedDB ----
   const open=()=>new Promise((res,rej)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>r.result.createObjectStore(ST);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
   const get=async()=>{const d=await open();return new Promise((res,rej)=>{const q=d.transaction(ST).objectStore(ST).get(KEY);q.onsuccess=()=>res(q.result||null);q.onerror=()=>rej(q.error)})};
   const put=async v=>{const d=await open();return new Promise((res,rej)=>{const t=d.transaction(ST,'readwrite');t.objectStore(ST).put(v,KEY);t.oncomplete=res;t.onerror=()=>rej(t.error)})};
-
+  const del=async()=>{const d=await open();return new Promise(res=>{const t=d.transaction(ST,'readwrite');t.objectStore(ST).delete(KEY);t.oncomplete=res;t.onerror=res})};
   const mb=n=>(n/1048576).toFixed(1)+' MB';
+
+  // ---- uhakiki wa APK (faili ya zip huanza na "PK") ----
+  async function isApk(blob){
+    try{
+      if(!blob||blob.size<1024) return false;
+      const b=new Uint8Array(await blob.slice(0,4).arrayBuffer());
+      return b[0]===0x50&&b[1]===0x4B&&b[2]===0x03&&b[3]===0x04;
+    }catch(_){return false}
+  }
 
   async function download(){
     const r=await fetch(APK_URL,{cache:'no-cache'});
-    if(!r.ok) throw new Error('Faili haijapatikana');
+    if(!r.ok) throw new Error('Faili ya app haijapatikana. Jaribu tena baadaye.');
     const total=+r.headers.get('Content-Length')||0;
-    if(!r.body||!r.body.getReader) return r.blob();
+    if(!r.body||!r.body.getReader) return new Blob([await r.blob()],{type:MIME});
     const rd=r.body.getReader(), parts=[]; let got=0;
     for(;;){
       const {done,value}=await rd.read(); if(done) break;
       parts.push(value); got+=value.length;
-      if(total){const p=Math.round(got/total*100);fill.style.width=p+'%';txt.textContent=p+'%'}
+      if(total){const p=Math.min(100,Math.round(got/total*100));fill.style.width=p+'%';txt.textContent=p+'%'}
       else txt.textContent=mb(got);
     }
+    if(total && got!==total) throw new Error('Upakuaji haukukamilika. Angalia intaneti kisha jaribu tena.');
     return new Blob(parts,{type:MIME});
   }
 
   function save(blob){
     const u=URL.createObjectURL(new Blob([blob],{type:MIME}));
-    const a=document.createElement('a'); a.href=u; a.download=APK_NAME;
+    const a=document.createElement('a'); a.href=u; a.download=APK_NAME; a.rel='noopener';
     document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(u),60000);
+    setTimeout(()=>URL.revokeObjectURL(u),120000);
   }
 
-  // Onyesha ukubwa wa faili (kama inapatikana)
+  // ---- ukubwa wa faili ----
   (async()=>{
     try{
       const rec=await get();
@@ -124,25 +141,30 @@
     }catch(_){}
   })();
 
-  btn.addEventListener('click',async()=>{
+  async function run(){
     if(busy) return; busy=true; msg.textContent=''; msg.className='msg';
     btn.classList.remove('done'); btn.classList.add('busy'); fill.style.width='0'; txt.textContent='0%';
     try{
       let rec=null; try{rec=await get()}catch(_){}
-      let blob;
-      if(rec&&rec.blob){blob=rec.blob; fill.style.width='100%'}
-      else{ blob=await download(); try{await put({blob})}catch(_){} }
+      let blob=rec&&rec.blob;
+      if(blob && !(await isApk(blob))){ blob=null; try{await del()}catch(_){} }
+      if(blob){ fill.style.width='100%'; }
+      else{
+        blob=await download();
+        if(!(await isApk(blob))) throw new Error('Faili iliyopakuliwa si APK sahihi. Mmiliki ahakikishe Computer.apk iko kwenye repository.');
+        try{await put({blob})}catch(_){}
+      }
       save(blob);
       countDownload();
       btn.classList.remove('busy'); btn.classList.add('done'); fill.style.width='0';
       txt.textContent='Imepakuliwa ✔';
-      msg.textContent='Gusa faili kwenye notification kisha Install.';
     }catch(e){
       btn.classList.remove('busy'); fill.style.width='0'; txt.textContent='Jaribu tena';
       msg.className='msg err'; msg.textContent=e.message||'Hitilafu imetokea';
     }
     busy=false;
-  });
+  }
+  btn.addEventListener('click',run);
 })();
 </script>
 </body>
