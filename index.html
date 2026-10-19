@@ -48,6 +48,16 @@
   .agree a,.legal a{color:#fff;font-weight:600;text-decoration:underline;text-underline-offset:2px}
   .legal{margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.2);font-size:12px;display:flex;justify-content:center;gap:10px;opacity:.9}
   .legal i{opacity:.5;font-style:normal}
+
+  /* ---- password box ---- */
+  .pw{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,10,50,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+  .pwbox{width:100%;max-width:320px;padding:26px 22px;text-align:center;border-radius:24px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.35);box-shadow:0 20px 60px rgba(0,10,60,.5)}
+  .pwbox h3{margin:0 0 16px;font-size:18px}
+  .pwbox input{width:100%;height:52px;border:0;border-radius:14px;text-align:center;font-size:24px;letter-spacing:10px;color:#06214f;background:#fff;outline:none}
+  .pwmsg{min-height:18px;margin:10px 0;font-size:13px;color:#ffd0d0}
+  .pwrow{display:flex;gap:10px}
+  .pwrow button{flex:1;height:46px;border:0;border-radius:12px;font:700 15px inherit;font-family:inherit;cursor:pointer;background:rgba(255,255,255,.25);color:#fff}
+  .pwrow #pwok{background:#fff;color:#06214f}
 </style>
 </head>
 <body>
@@ -69,6 +79,17 @@
   <nav class="legal"><a href="./terms.html">Terms of Use</a><i>&bull;</i><a href="./privacy.html">Privacy Policy</a></nav>
 </main>
 
+<div class="pw hide" id="pw">
+  <div class="pwbox">
+    <h3>Weka Password</h3>
+    <input id="pwin" type="password" inputmode="numeric" maxlength="4" placeholder="••••" autocomplete="off">
+    <div class="pwmsg" id="pwmsg"></div>
+    <div class="pwrow">
+      <button type="button" id="pwcancel">Ghairi</button>
+      <button type="button" id="pwok">Ingia</button>
+    </div>
+  </div>
+</div>
 
 <script>
 (() => {
@@ -79,11 +100,23 @@
   const btn=$('btn'), fill=$('fill'), txt=$('txt'), msg=$('msg'), sizeEl=$('size');
   let busy=false;
 
-  // 🔵 ibonyezwe mara 5 mfululizo
-  (()=>{ let n=0,tm=null; $('cp').addEventListener('click',()=>{
-    n++; clearTimeout(tm); tm=setTimeout(()=>{n=0},2500);
-    if(n>=5){ n=0; location.href='./control-panel.html'; }
-  }); })();
+  // 🔵 ibonyezwe mara 10 mfululizo -> password 4944 -> dashboard
+  (()=>{
+    let n=0,tm=null;
+    const pw=$('pw'), inp=$('pwin'), pm=$('pwmsg');
+    const close=()=>{pw.classList.add('hide');inp.value='';pm.textContent=''};
+    const check=()=>{
+      if(inp.value==='4944'){ close(); location.href='./control-panel.html'; }
+      else{ pm.textContent='Password si sahihi'; inp.value=''; inp.focus(); }
+    };
+    $('cp').addEventListener('click',()=>{
+      n++; clearTimeout(tm); tm=setTimeout(()=>{n=0},4000);
+      if(n>=10){ n=0; pw.classList.remove('hide'); setTimeout(()=>inp.focus(),50); }
+    });
+    $('pwok').addEventListener('click',check);
+    $('pwcancel').addEventListener('click',close);
+    inp.addEventListener('keydown',e=>{ if(e.key==='Enter') check(); });
+  })();
 
   // ---- hesabu ----
   function hit(key){ try{ fetch(COUNT_API+key,{keepalive:true}).catch(()=>{}) }catch(_){} }
