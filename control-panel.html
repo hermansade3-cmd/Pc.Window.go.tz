@@ -9,22 +9,16 @@
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
   html,body{margin:0;min-height:100%;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-  body{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;color:#fff;background:linear-gradient(160deg,#0a3fd6,#061446) fixed}
-  .card{width:100%;max-width:380px;padding:30px 24px;text-align:center;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);border-radius:30px;
+  body{min-height:100vh;display:flex;justify-content:center;padding:70px 16px 30px;color:#fff;background:linear-gradient(160deg,#0a3fd6,#061446) fixed}
+  .card{width:100%;max-width:460px;margin:auto 0;padding:28px 20px;text-align:center;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);border-radius:30px;
     backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 28px 70px rgba(0,10,60,.55);animation:up .6s cubic-bezier(.2,.8,.2,1) both}
   @keyframes up{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
   h1{margin:0 0 6px;font-size:40px;line-height:1}
   .sub{font-size:13px;opacity:.75;margin-bottom:22px;min-height:18px}
   .hide{display:none!important}
-  .back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 14px);left:14px;color:#fff;text-decoration:none;font-weight:600;font-size:14px;padding:10px 14px;border-radius:99px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3)}
+  .back{position:fixed;top:calc(env(safe-area-inset-top,0px) + 14px);left:14px;z-index:5;color:#fff;text-decoration:none;font-weight:600;font-size:14px;padding:10px 14px;border-radius:99px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3)}
 
-  /* orbs (hazitumiki) */
-  .orbs{display:flex;justify-content:center;gap:10px;margin:10px 0 4px}
-  .orb{font-size:36px;line-height:1;background:none;border:0;padding:6px;cursor:pointer;filter:grayscale(1) opacity(.35);transition:filter .2s,transform .2s}
-  .orb.on{filter:none;transform:scale(1.12)}
-  .orb:active{transform:scale(.9)}
-
-  /* hatua 2: PIN */
+  /* PIN */
   .dots{display:flex;justify-content:center;gap:14px;margin:6px 0 22px}
   .dots i{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.7);transition:background .15s}
   .dots i.f{background:#fff}
@@ -39,11 +33,27 @@
   /* dashboard */
   .big{font-size:76px;font-weight:800;line-height:1;margin:8px 0 2px;letter-spacing:-2px;text-shadow:0 4px 24px rgba(0,20,90,.5)}
   .lbl{font-size:13px;letter-spacing:1.4px;text-transform:uppercase;opacity:.8}
-  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:24px 0 18px}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0 10px}
   .stat{padding:14px 8px;border-radius:18px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25)}
   .stat b{display:block;font-size:26px}
   .stat span{font-size:11.5px;opacity:.8}
-  .btns{display:flex;gap:10px}
+  .stat.hl{background:rgba(255,255,255,.24)}
+  .sec{margin-top:22px;text-align:left}
+  .sec h3{margin:0 0 10px;font-size:14px;letter-spacing:1.2px;text-transform:uppercase;opacity:.85}
+  .tabs{display:flex;gap:8px;margin-bottom:10px}
+  .tab{flex:1;height:36px;border-radius:12px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit}
+  .tab.on{background:#fff;color:#06214f}
+  canvas{width:100%;height:190px;display:block;border-radius:16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2)}
+  .brand{margin-bottom:10px}
+  .brand .row{display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px}
+  .brand .bar{height:8px;border-radius:99px;background:rgba(255,255,255,.15);overflow:hidden}
+  .brand .bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#8fd0ff,#fff);transition:width .5s}
+  .top{display:inline-block;font-size:10px;padding:2px 8px;border-radius:99px;background:#ffd34d;color:#4a3300;font-weight:800;margin-left:6px;vertical-align:middle}
+  .hist{max-height:240px;overflow:auto;border-radius:16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2)}
+  .hist div{display:flex;justify-content:space-between;padding:10px 14px;font-size:14px;border-bottom:1px solid rgba(255,255,255,.12)}
+  .hist div:last-child{border-bottom:0}
+  .hist .empty{justify-content:center;opacity:.7}
+  .btns{display:flex;gap:10px;margin-top:22px}
   .btns button{flex:1;height:50px;border:0;border-radius:15px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit}
   .b1{background:linear-gradient(180deg,#fff,#dbe9ff);color:#06214f}
   .b2{background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.3)!important}
@@ -57,7 +67,7 @@
   <h1>🔵</h1>
   <div class="sub" id="sub"></div>
 
-  <!-- Hatua 2 -->
+  <!-- PIN -->
   <section id="s2">
     <div class="dots" id="dots"><i></i><i></i><i></i><i></i></div>
     <div class="pad" id="pad"></div>
@@ -67,10 +77,38 @@
   <section id="s3" class="hide">
     <div class="lbl">Total Downloads</div>
     <div class="big" id="total">…</div>
+
     <div class="stats">
       <div class="stat"><b id="devices">…</b><span>Unique devices</span></div>
       <div class="stat"><b id="avg">…</b><span>Downloads / device</span></div>
+      <div class="stat hl"><b id="today">…</b><span>Downloads Today</span></div>
+      <div class="stat hl"><b id="week">…</b><span>Downloads This Week</span></div>
+      <div class="stat hl" style="grid-column:1/-1"><b id="month">…</b><span>Downloads This Month</span></div>
     </div>
+
+    <div class="sec">
+      <h3>📊 Chart ya Downloads</h3>
+      <div class="tabs">
+        <button class="tab on" data-c="days">Siku 14</button>
+        <button class="tab" data-c="hours">Saa 24</button>
+      </div>
+      <canvas id="chart"></canvas>
+    </div>
+
+    <div class="sec">
+      <h3>📱 Vifaa vya simu (downloads kwa kila kifaa)</h3>
+      <div id="brands"></div>
+    </div>
+
+    <div class="sec">
+      <h3>🕒 Download History</h3>
+      <div class="tabs">
+        <button class="tab on" data-h="days">Kwa tarehe</button>
+        <button class="tab" data-h="hours">Kwa saa</button>
+      </div>
+      <div class="hist" id="hist"></div>
+    </div>
+
     <div class="btns">
       <button class="b1" id="refresh">Refresh</button>
       <button class="b2" id="logout">Lock</button>
@@ -83,8 +121,14 @@
 (() => {
   const NS='pcwgt-hermansade3-apk', API='https://abacus.jasoncameron.dev/get/';
   const PIN_HASH='01bb21bb9b71d7f425dc0b1d77cc9579b8ae5eba7fe47b14c7a6be4a7b11cc78', SALT='pcwgt:';
+  // Funguo lazima zilingane na kipande kilichowekwa kwenye index.html
+  const BRANDS=[['samsung','Samsung'],['tecno','Tecno'],['infinix','Infinix'],['itel','itel'],['xiaomi','Xiaomi / Redmi'],
+    ['oppo','Oppo'],['vivo','Vivo'],['realme','Realme'],['huawei','Huawei / Honor'],['nokia','Nokia'],['iphone','iPhone'],['other','Nyingine']];
   const $=id=>document.getElementById(id);
   const show=n=>{['s2','s3'].forEach(k=>$(k).classList.toggle('hide',k!=='s'+n))};
+  const p2=n=>String(n).padStart(2,'0');
+  const dKey=d=>'d-'+d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate());
+  const hKey=d=>'h-'+d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate())+p2(d.getHours());
 
   async function sha(s){
     if(window.crypto&&crypto.subtle){
@@ -109,9 +153,8 @@
     else if(pin.length<4) pin+=k;
     draw();
     if(pin.length===4){
-      let ok;
       const h=await sha(SALT+pin);
-      ok = h ? h===PIN_HASH : false;
+      const ok = h ? h===PIN_HASH : false;
       if(ok){ try{sessionStorage.setItem('pcwgt_auth','1')}catch(_){} enter(); }
       else{
         $('sub').textContent='Password si sahihi'; $('sub').className='sub err';
@@ -121,29 +164,112 @@
     }
   }
 
-  // ---- dashboard ----
+  // ---- data ----
   async function get(key){
     const r=await fetch(API+NS+'/'+key,{cache:'no-store'});
     if(r.status===404) return 0;
     if(!r.ok) throw new Error('HTTP '+r.status);
     const j=await r.json(); return +j.value||0;
   }
+  const sum=a=>a.reduce((x,y)=>x+y,0);
+  let D=null, chartMode='days', histMode='days';
+
   async function load(){
     $('upd').textContent='Inapakia...';
     try{
-      const [d,v]=await Promise.all([get('downloads'),get('devices')]);
-      $('total').textContent=d.toLocaleString();
-      $('devices').textContent=v.toLocaleString();
-      $('avg').textContent=v?(d/v).toFixed(1):'0';
+      const now=new Date();
+      const days=[...Array(31)].map((_,i)=>new Date(now.getFullYear(),now.getMonth(),now.getDate()-i)); // 0 = leo
+      const hours=[...Array(24)].map((_,i)=>new Date(now.getTime()-i*3600000));                         // 0 = saa hii
+      const [total,devs,dv,hv,bv]=await Promise.all([
+        get('downloads'),get('devices'),
+        Promise.all(days.map(d=>get(dKey(d)))),
+        Promise.all(hours.map(h=>get(hKey(h)))),
+        Promise.all(BRANDS.map(b=>get('b-'+b[0])))
+      ]);
+      D={now,total,devs,days,hours,dv,hv,bv};
+
+      const dow=(now.getDay()+6)%7;            // wiki inaanza Jumatatu
+      $('total').textContent=total.toLocaleString();
+      $('devices').textContent=devs.toLocaleString();
+      $('avg').textContent=devs?(total/devs).toFixed(1):'0';
+      $('today').textContent=dv[0].toLocaleString();
+      $('week').textContent=sum(dv.slice(0,dow+1)).toLocaleString();
+      $('month').textContent=sum(dv.slice(0,now.getDate())).toLocaleString();
+
+      renderBrands(); renderChart(); renderHist();
       $('upd').textContent='Imesasishwa: '+new Date().toLocaleTimeString();
     }catch(e){
       $('upd').textContent='Imeshindwa kupata data. Angalia intaneti kisha Refresh.';
     }
   }
+
+  function renderBrands(){
+    const rows=BRANDS.map((b,i)=>({n:b[1],v:D.bv[i]})).sort((a,b)=>b.v-a.v);
+    const max=Math.max(1,rows[0].v), tot=sum(rows.map(r=>r.v));
+    $('brands').innerHTML = tot ? rows.filter(r=>r.v>0).map((r,i)=>
+      `<div class="brand"><div class="row"><span>${r.n}${i===0?'<span class="top">TOP</span>':''}</span><b>${r.v.toLocaleString()} <small style="opacity:.7">(${Math.round(r.v/tot*100)}%)</small></b></div><div class="bar"><i style="width:${r.v/max*100}%"></i></div></div>`).join('')
+      : '<div class="hist"><div class="empty">Bado hakuna data ya vifaa</div></div>';
+  }
+
+  function renderHist(){
+    let rows;
+    if(histMode==='days'){
+      rows=D.days.map((d,i)=>[d.toLocaleDateString('sw-TZ',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}),D.dv[i]]);
+    }else{
+      rows=D.hours.map((h,i)=>[h.toLocaleDateString('sw-TZ',{day:'2-digit',month:'short'})+' · '+p2(h.getHours())+':00 – '+p2(h.getHours())+':59',D.hv[i]]);
+    }
+    rows=rows.filter(r=>r[1]>0);
+    $('hist').innerHTML = rows.length ? rows.map(r=>`<div><span>${r[0]}</span><b>${r[1].toLocaleString()}</b></div>`).join('')
+      : '<div class="empty">Hakuna downloads kwenye kipindi hiki</div>';
+  }
+
+  function renderChart(){
+    const cv=$('chart'), dpr=window.devicePixelRatio||1;
+    const W=cv.clientWidth, H=cv.clientHeight;
+    cv.width=W*dpr; cv.height=H*dpr;
+    const c=cv.getContext('2d'); c.scale(dpr,dpr); c.clearRect(0,0,W,H);
+    let labels,vals;
+    if(chartMode==='days'){
+      labels=D.days.slice(0,14).map(d=>p2(d.getDate())+'/'+p2(d.getMonth()+1)).reverse();
+      vals=D.dv.slice(0,14).reverse();
+    }else{
+      labels=D.hours.map(h=>p2(h.getHours())).reverse();
+      vals=D.hv.slice().reverse();
+    }
+    const max=Math.max(1,...vals), padL=28, padB=24, padT=18, n=vals.length;
+    const cw=(W-padL-8)/n, bw=Math.max(4,cw*.62);
+    c.font='10px system-ui'; c.textAlign='center';
+    // gridlines
+    c.strokeStyle='rgba(255,255,255,.15)'; c.fillStyle='rgba(255,255,255,.7)';
+    [0,.5,1].forEach(f=>{
+      const y=padT+(H-padT-padB)*(1-f);
+      c.beginPath(); c.moveTo(padL,y); c.lineTo(W-4,y); c.stroke();
+      c.textAlign='right'; c.fillText(Math.round(max*f),padL-4,y+3);
+    });
+    c.textAlign='center';
+    vals.forEach((v,i)=>{
+      const x=padL+cw*i+(cw-bw)/2, h=(H-padT-padB)*(v/max), y=H-padB-h;
+      const g=c.createLinearGradient(0,y,0,H-padB); g.addColorStop(0,'#ffffff'); g.addColorStop(1,'#7fc4ff');
+      c.fillStyle=g; c.beginPath();
+      if(c.roundRect) c.roundRect(x,y,bw,Math.max(h,v?2:0),4); else c.rect(x,y,bw,Math.max(h,v?2:0));
+      c.fill();
+      if(v){ c.fillStyle='#fff'; c.fillText(v,x+bw/2,y-4); }
+      if(chartMode==='days' ? (n-i)%2===1 : i%3===0){ c.fillStyle='rgba(255,255,255,.7)'; c.fillText(labels[i],x+bw/2,H-8); }
+    });
+  }
+
+  document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{
+    chartMode=b.dataset.c; document.querySelectorAll('[data-c]').forEach(x=>x.classList.toggle('on',x===b)); if(D) renderChart();
+  });
+  document.querySelectorAll('[data-h]').forEach(b=>b.onclick=()=>{
+    histMode=b.dataset.h; document.querySelectorAll('[data-h]').forEach(x=>x.classList.toggle('on',x===b)); if(D) renderHist();
+  });
+  window.addEventListener('resize',()=>{ if(D) renderChart(); });
+
   let timer=null;
   function enter(){
     $('sub').textContent=''; $('sub').className='sub';
-    show(3); load(); clearInterval(timer); timer=setInterval(load,30000);
+    show(3); load(); clearInterval(timer); timer=setInterval(load,60000);
   }
   $('refresh').onclick=load;
   $('logout').onclick=()=>{ try{sessionStorage.removeItem('pcwgt_auth')}catch(_){} location.reload(); };
