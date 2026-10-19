@@ -130,12 +130,34 @@
   const dKey=d=>'d-'+d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate());
   const hKey=d=>'h-'+d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate())+p2(d.getHours());
 
-  async function sha(s){
-    if(window.crypto&&crypto.subtle){
-      const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));
-      return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+  function sha256js(ascii){
+    var mp=Math.pow,mw=mp(2,32),res='',i,j,words=[],bl=ascii.length*8,hash=[],k=[],pc=0,comp={};
+    var rr=function(v,a){return (v>>>a)|(v<<(32-a))};
+    for(var c=2;pc<64;c++){ if(!comp[c]){ for(i=0;i<313;i+=c) comp[i]=c; hash[pc]=(mp(c,.5)*mw)|0; k[pc++]=(mp(c,1/3)*mw)|0; } }
+    ascii+='\x80'; while(ascii.length%64-56) ascii+='\x00';
+    for(i=0;i<ascii.length;i++){ j=ascii.charCodeAt(i); if(j>>8) return null; words[i>>2]|=j<<((3-i)%4)*8; }
+    words[words.length]=((bl/mw)|0); words[words.length]=bl;
+    for(j=0;j<words.length;){
+      var w=words.slice(j,j+=16), old=hash; hash=hash.slice(0,8);
+      for(i=0;i<64;i++){
+        var w15=w[i-15],w2=w[i-2],a=hash[0],e=hash[4];
+        var t1=hash[7]+(rr(e,6)^rr(e,11)^rr(e,25))+((e&hash[5])^((~e)&hash[6]))+k[i]+(w[i]=(i<16)?w[i]:(w[i-16]+(rr(w15,7)^rr(w15,18)^(w15>>>3))+w[i-7]+(rr(w2,17)^rr(w2,19)^(w2>>>10)))|0);
+        var t2=(rr(a,2)^rr(a,13)^rr(a,22))+((a&hash[1])^(a&hash[2])^(hash[1]&hash[2]));
+        hash=[(t1+t2)|0].concat(hash); hash[4]=(hash[4]+t1)|0;
+      }
+      for(i=0;i<8;i++) hash[i]=(hash[i]+old[i])|0;
     }
-    return null;
+    for(i=0;i<8;i++) for(j=3;j+1;j--){ var b=(hash[i]>>(j*8))&255; res+=((b<16)?0:'')+b.toString(16); }
+    return res;
+  }
+  async function sha(s){
+    try{
+      if(window.crypto&&crypto.subtle){
+        const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));
+        return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+      }
+    }catch(_){}
+    return sha256js(s);
   }
 
   // ---- password ----
@@ -165,42 +187,74 @@
   }
 
   // ---- data ----
-  async function get(key){
-    const r=await fetch(API+NS+'/'+key,{cache:'no-store'});
-    if(r.status===404) return 0;
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    const j=await r.json(); return +j.value||0;
+  const CK='pcwgt_cache_v1'; let cache={};
+  try{cache=JSON.parse(localStorage.getItem(CK)||'{}')}catch(_){}
+  const saveCache=()=>{try{localStorage.setItem(CK,JSON.stringify(cache))}catch(_){}};
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  async function fetchOne(key){
+    for(let t=0;t<3;t++){
+      try{
+        const r=await fetch(API+NS+'/'+key,{cache:'no-store'});
+        if(r.status===404) return 0;
+        if(r.ok){ const j=await r.json(); return +j.value||0; }
+      }catch(_){}
+      await sleep(500*(t+1));
+    }
+    return null; // imeshindwa
+  }
+  // inapakia kidogo-kidogo (5 kwa wakati) ili seva isikatae maombi mengi
+  async function getMany(keys,canCache){
+    const out=new Array(keys.length); let idx=0, fails=0;
+    async function worker(){
+      while(idx<keys.length){
+        const i=idx++, k=keys[i];
+        if(canCache[i] && cache[k]!==undefined){ out[i]=cache[k]; continue; }
+        const v=await fetchOne(k);
+        if(v===null){ fails++; out[i]=0; } else { out[i]=v; if(canCache[i]) cache[k]=v; }
+      }
+    }
+    await Promise.all([...Array(5)].map(worker));
+    return {out,fails};
   }
   const sum=a=>a.reduce((x,y)=>x+y,0);
-  let D=null, chartMode='days', histMode='days';
+  let D=null, chartMode='days', histMode='days', loading=false;
 
   async function load(){
+    if(loading) return; loading=true;
     $('upd').textContent='Inapakia...';
     try{
-      const now=new Date();
-      const days=[...Array(31)].map((_,i)=>new Date(now.getFullYear(),now.getMonth(),now.getDate()-i)); // 0 = leo
-      const hours=[...Array(24)].map((_,i)=>new Date(now.getTime()-i*3600000));                         // 0 = saa hii
-      const [total,devs,dv,hv,bv]=await Promise.all([
-        get('downloads'),get('devices'),
-        Promise.all(days.map(d=>get(dKey(d)))),
-        Promise.all(hours.map(h=>get(hKey(h)))),
-        Promise.all(BRANDS.map(b=>get('b-'+b[0])))
-      ]);
-      D={now,total,devs,days,hours,dv,hv,bv};
-
-      const dow=(now.getDay()+6)%7;            // wiki inaanza Jumatatu
+      // Hatua 1: jumla (zinaonekana haraka)
+      const t=await getMany(['downloads','devices'],[false,false]);
+      const total=t.out[0], devs=t.out[1];
       $('total').textContent=total.toLocaleString();
       $('devices').textContent=devs.toLocaleString();
       $('avg').textContent=devs?(total/devs).toFixed(1):'0';
+      if(t.fails===2){
+        $('upd').textContent='Imeshindwa kuunganisha na seva ya hesabu. Angalia intaneti kisha bonyeza Refresh.';
+        loading=false; return;
+      }
+
+      // Hatua 2: siku, saa na chapa za simu
+      const now=new Date();
+      const days=[...Array(31)].map((_,i)=>new Date(now.getFullYear(),now.getMonth(),now.getDate()-i));
+      const hours=[...Array(24)].map((_,i)=>new Date(now.getTime()-i*3600000));
+      const keys=[...days.map(dKey),...hours.map(hKey),...BRANDS.map(b=>'b-'+b[0])];
+      const can=[...days.map((_,i)=>i>=2),...hours.map((_,i)=>i>=3),...BRANDS.map(()=>false)];
+      const r=await getMany(keys,can);
+      saveCache();
+      const dv=r.out.slice(0,31), hv=r.out.slice(31,55), bv=r.out.slice(55);
+      D={now,total,devs,days,hours,dv,hv,bv};
+
+      const dow=(now.getDay()+6)%7;
       $('today').textContent=dv[0].toLocaleString();
       $('week').textContent=sum(dv.slice(0,dow+1)).toLocaleString();
       $('month').textContent=sum(dv.slice(0,now.getDate())).toLocaleString();
-
       renderBrands(); renderChart(); renderHist();
-      $('upd').textContent='Imesasishwa: '+new Date().toLocaleTimeString();
+      $('upd').textContent='Imesasishwa: '+new Date().toLocaleTimeString()+(r.fails?' · baadhi ya data haikupatikana ('+r.fails+')':'');
     }catch(e){
-      $('upd').textContent='Imeshindwa kupata data. Angalia intaneti kisha Refresh.';
+      $('upd').textContent='Hitilafu: '+(e&&e.message?e.message:'imeshindwa kupata data');
     }
+    loading=false;
   }
 
   function renderBrands(){
