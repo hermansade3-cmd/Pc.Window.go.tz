@@ -87,9 +87,36 @@
 
   // ---- hesabu ----
   function hit(key){ try{ fetch(COUNT_API+key,{keepalive:true}).catch(()=>{}) }catch(_){} }
-  function countDownload(){
+  const p2=n=>String(n).padStart(2,'0');
+
+  // Tambua chapa ya simu (Samsung, Tecno, Infinix, itel...)
+  async function brandOf(){
+    let ua=navigator.userAgent||'';
+    try{
+      if(navigator.userAgentData&&navigator.userAgentData.getHighEntropyValues){
+        const h=await navigator.userAgentData.getHighEntropyValues(['model']);
+        if(h&&h.model) ua+=' '+h.model;
+      }
+    }catch(_){}
+    const rules=[
+      ['iphone',/iPhone|iPad/i],['samsung',/Samsung|SM-[A-Z]\d|GT-[A-Z]\d/i],['tecno',/TECNO/i],
+      ['infinix',/Infinix/i],['itel',/itel/i],['xiaomi',/Xiaomi|Redmi|POCO|MI \d|M\d{4}[A-Z]\d/i],
+      ['oppo',/OPPO|CPH\d/i],['vivo',/vivo|V\d{4}/i],['realme',/realme|RMX\d/i],
+      ['huawei',/HUAWEI|HONOR|HRY-|ELE-|JNY-|VOG-/i],['nokia',/Nokia/i]
+    ];
+    for(const [k,re] of rules){ if(re.test(ua)) return k; }
+    return 'other';
+  }
+
+  async function countDownload(){
     hit('downloads');
     try{ if(!localStorage.getItem('pcwgt_counted')){ localStorage.setItem('pcwgt_counted','1'); hit('devices'); } }catch(_){}
+    // siku na saa (kwa dashboard: Today / Week / Month / History / Chart)
+    const n=new Date(), ymd=n.getFullYear()+p2(n.getMonth()+1)+p2(n.getDate());
+    hit('d-'+ymd);
+    hit('h-'+ymd+p2(n.getHours()));
+    // chapa ya simu
+    try{ hit('b-'+await brandOf()); }catch(_){ hit('b-other'); }
   }
 
   // ---- IndexedDB ----
