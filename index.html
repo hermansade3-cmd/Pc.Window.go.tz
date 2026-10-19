@@ -157,7 +157,7 @@
       save(blob);
       countDownload();
       btn.classList.remove('busy'); btn.classList.add('done'); fill.style.width='0';
-      txt.textContent='Imepakuliwa ✔';
+      txt.textContent='Downloading....';
     }catch(e){
       btn.classList.remove('busy'); fill.style.width='0'; txt.textContent='Jaribu tena';
       msg.className='msg err'; msg.textContent=e.message||'Hitilafu imetokea';
